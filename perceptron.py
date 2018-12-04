@@ -126,6 +126,7 @@ def single_perceptron(data, iterations):
     for o2 in range(0, len_row):
         o_zeros.append(0)
     [sum_error, err_array] = error_func(o_zeros, class_col)
+    print("----------------------------------error values for constant learning rate----------------------------------")
     updated_ws0 = update_weights_const(col_data, [0, 0, 0], err_array)
     output_error_const.append(sum_error)
     updated_ws = updated_ws0
@@ -141,6 +142,7 @@ def single_perceptron(data, iterations):
     for o2 in range(0, len_row):
         o_zeros.append(0)
     [sum_error, err_array] = error_func(o_zeros, class_col)
+    print("---------------------------------error values for annealing learning rate----------------------------------")
     updated_ws0 = update_weights_annealing(col_data, [0, 0, 0], err_array, 1)
     output_error_anneal.append(sum_error)
     updated_ws = updated_ws0
@@ -163,7 +165,7 @@ def write_data(row1, row2, filename):
         for value in row2:
             line.append(value)
         output_file.writerow(line)
-        print("File written in " + filename)
+        print("Output file written in " + filename)
 
 
 if __name__ == '__main__':
@@ -211,6 +213,8 @@ if __name__ == '__main__':
     if iter_req == 0:
         iter_req = 100
     [out_const_learning, out_anneal_learning] = single_perceptron(data, iter_req)
+    print("Error of each iteration with the constant learning rate:")
     print(out_const_learning)
+    print("Error of each iteration with the annealing learning rate:")
     print(out_anneal_learning)
     write_data(out_const_learning, out_anneal_learning, outputfile)
