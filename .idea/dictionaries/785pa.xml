@@ -3,6 +3,7 @@
     <words>
       <w>inputfile</w>
       <w>outputfile</w>
+      <w>perceptron</w>
     </words>
   </dictionary>
 </component>

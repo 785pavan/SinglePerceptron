@@ -90,12 +90,11 @@ def update_weights_annealing(data_column, previous_weight_array, error, iter_up_
     w0 = previous_weight_array[0] + (1 / iter_up_weights) * sum_error
     new_ws = list()
     new_ws.append(w0)
-
     for i in range(len_col):
-        err_sum1 = 0
+        sum_error = 0
         for j in range(len_row):
-            err_sum1 += (1 / iter_up_weights) * (error[j] * data_col[i][j])
-        new_weight = previous_weight_array[i + 1] + err_sum1
+            sum_error += (1 / iter_up_weights) * (error[j] * data_col[i][j])
+        new_weight = previous_weight_array[i + 1] + sum_error
         new_ws.append(new_weight)
     return new_ws
 
@@ -105,12 +104,12 @@ def activation_function(data_column, weights):
     len_row = data_column[0].__len__()
     out_array = []
     for i in range(len_row):
-        check1 = 0
+        sigma_w = 0
         for j in range(len_col):
             next_sum = data_column[j][i] * weights[j + 1]
-            check1 += next_sum
-        check1 += weights[0]
-        if check1 > 0:
+            sigma_w += next_sum
+        sigma_w += weights[0]
+        if sigma_w > 0:
             out_array.append(1)
         else:
             out_array.append(0)
