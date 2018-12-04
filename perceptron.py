@@ -1,236 +1,216 @@
 import csv
-import numpy as np
-
-Address1 = "Example.tsv"
-
-with open(Address1) as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter='\t')
-    i = 0
-    rdata = []
-    for n in csv_reader:
-        if len(n) != 0:
-            n3 = []
-            for n2 in n:
-                if len(n2) != 0:
-                    n3.append(n2)
-            rdata.append(n3)
-number_of_column = len(rdata[0])
-number_of_rows = len(rdata)
-print(number_of_rows, number_of_column, rdata)
+import getopt
+import sys
 
 
-def alphabet_to_output(column):
-    class1 = []
-    for ato1 in column:
-        if ato1 == "A":
-            class1.append(1)
-        elif ato1 == "B":
-            class1.append(0)
+def get_data(filename):
+    with open(filename) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter='\t')
+        i = 0
+        data = []
+        for line in csv_reader:
+            if line.__len__() != 0:
+                row = []
+                for col in line:
+                    if col.__len__() != 0:
+                        row.append(col)
+                data.append(row)
 
-    return class1
+    return data, get_col(data), get_row(data)
 
 
-def row_to_column(data):
-    number_of_column1 = len(data[0])
-    number_of_rows1 = len(data)
+def get_col(data):
+    return data[0].__len__()
+
+
+def get_row(data):
+    return data.__len__()
+
+
+def classify(column):
+    classification = []
+    for value in column:
+        if value == "A":
+            classification.append(1)
+        elif value == "B":
+            classification.append(0)
+    return classification
+
+
+def transpose(data):
+    len_col = data[0].__len__()
+    len_row = data.__len__()
     col_array = []
     col_array_class = []
-    for rtc2 in range(number_of_rows1):
-        col_array_class.append(data[rtc2][0])
-    # col_array.append(col_array2)
-
-    # temp = 0
-    for rtc1 in range(1, number_of_column1):
+    for i in range(len_row):
+        col_array_class.append(data[i][0])
+    for j in range(1, len_col):
         col_array2 = []
-        for rtc2 in range(number_of_rows1):
-            temp = data[rtc2][rtc1]
+        for i in range(len_row):
+            temp = data[i][j]
             col_array2.append(float(temp))
         col_array.append(col_array2)
-
     return col_array, col_array_class
-
-
-# print(row_to_column(rdata[1]))
-[data_col, class_col] = row_to_column(rdata)
-# class_col = data_col[0]
-print(alphabet_to_output(class_col))
-class_col_binary = alphabet_to_output(class_col)
-print(data_col)
 
 
 def error_func(output, data_column_class):
     sum_err = 0
-    err_array_ef = []
-    # print(len(output), len(data_column_class))
-    for ef1 in range(len(output)):
-        if output[ef1] != data_column_class[ef1]:
+    err_array = []
+    for i in range(len(output)):
+        if output[i] != data_column_class[i]:
             sum_err += 1
-        err_array_ef.append(data_column_class[ef1] - output[ef1])
-    return sum_err, err_array_ef
+        err_array.append(data_column_class[i] - output[i])
+    return sum_err, err_array
 
 
-o_test = []
-for o in range(0, number_of_rows):
-    o_test.append(0)
-print(o_test)
-
-print(error_func(o_test, class_col_binary))
-print(error_func([0, 0, 1, 1], [0, 1, 0, 1]))
-[sum_error, err_array] = error_func(o_test, class_col_binary)
-
-
-def update_weights_const(data_column, previous_weight_array, error):
+def update_weights_const(data_column, previous_w, error):
     print("error:", error)
-    number_of_column2 = len(data_column)
-    number_of_rows2 = len(data_column[0])
-    # new_weight0 = []
-    s_err = sum(error)
-    # error_func(o_test, class_col_binary)
-    new_weight0 = previous_weight_array[0] + s_err
+    len_col = len(data_column)
+    len_row = len(data_column[0])
+    sum_error = sum(error)
+    w0 = previous_w[0] + sum_error
 
-    new_weights = list()
-    new_weights.append(new_weight0)
+    new_ws = list()
+    new_ws.append(w0)
+    for i in range(len_col):
+        err_sum = 0
+        for j in range(len_row):
+            err_sum += error[j] * data_col[i][j]
+        new_weight = previous_w[i + 1] + err_sum
+        new_ws.append(new_weight)
 
-    for uw1 in range(number_of_column2):
-        err_sum1 = 0
-        for uw2 in range(number_of_rows2):
-            err_sum1 += error[uw2] * data_col[uw1][uw2]
-        new_weight = previous_weight_array[uw1 + 1] + err_sum1
-        new_weights.append(new_weight)
-
-    return new_weights
-
-
-print(update_weights_const(data_col, [0, 0, 0], err_array))
-
-
-# print(update_weights_const(data_col, [200, 0, 0], err_array))
+    return new_ws
 
 
 def update_weights_annealing(data_column, previous_weight_array, error, iter_up_weights):
     print("error:", error)
-    number_of_column2 = len(data_column)
-    number_of_rows2 = len(data_column[0])
-    # new_weight0 = []
-    s_err = sum(error)
-    # error_func(o_test, class_col_binary)
-    new_weight0 = previous_weight_array[0] + (1 / iter_up_weights) * s_err
+    len_col = data_column.__len__()
+    len_row = data_column[0].__len__()
+    sum_error = sum(error)
+    w0 = previous_weight_array[0] + (1 / iter_up_weights) * sum_error
+    new_ws = list()
+    new_ws.append(w0)
 
-    new_weights = list()
-    new_weights.append(new_weight0)
-
-    for uw1 in range(number_of_column2):
+    for i in range(len_col):
         err_sum1 = 0
-        for uw2 in range(number_of_rows2):
-            err_sum1 += (1 / iter_up_weights) * (error[uw2] * data_col[uw1][uw2])
-        new_weight = previous_weight_array[uw1 + 1] + err_sum1
-        new_weights.append(new_weight)
+        for j in range(len_row):
+            err_sum1 += (1 / iter_up_weights) * (error[j] * data_col[i][j])
+        new_weight = previous_weight_array[i + 1] + err_sum1
+        new_ws.append(new_weight)
+    return new_ws
 
-    return new_weights
 
-
-def activation_perceptron(data_column, weights):
-    number_of_column3 = len(data_column)
-    number_of_rows3 = len(data_column[0])
+def activation_function(data_column, weights):
+    len_col = data_column.__len__()
+    len_row = data_column[0].__len__()
     out_array = []
-    for ap1 in range(number_of_rows3):
+    for i in range(len_row):
         check1 = 0
-        for ap2 in range(number_of_column3):
-            next_sum = data_column[ap2][ap1] * weights[ap2 + 1]
+        for j in range(len_col):
+            next_sum = data_column[j][i] * weights[j + 1]
             check1 += next_sum
         check1 += weights[0]
         if check1 > 0:
             out_array.append(1)
         else:
             out_array.append(0)
-
     return out_array
 
 
-print(activation_perceptron(data_col, [200, 191.36959200000007, 236.86229100000003]))
-print(sum(activation_perceptron(data_col, [200, 191.36959200000007, 236.86229100000003])))
-
-out_arr1 = activation_perceptron(data_col, [200, 191.36959200000007, 236.86229100000003])
-[sum_error, err_array] = error_func(out_arr1, class_col_binary)
-print(sum_error)
-print(update_weights_const(data_col, [200, 191.36959200000007, 236.86229100000003], err_array))
-out_arr1 = activation_perceptron(data_col, [190, -163.3488430000001, 227.67655900000005])
-[sum_error, err_array] = error_func(out_arr1, class_col_binary)
-print(sum_error)
-
-
-# class PerceptronGradientDecent(object):
-#
-#     def __init__(self, iteration1, learning_rate):
-#
-#         self.iteration1 = iteration1
-#         self.learning_rate = learning_rate
-#
-#     def predictions(self, rows, weights):
-#
-#         return 1 + rows + weights
-
-
-def iteration_final(data, iterations):
-    number_of_rows4 = len(rdata)
-    out_error_array = []
-    iter1 = 0
-    [data_col_f, class_col_f] = row_to_column(data)
-    class_col_binary_f = alphabet_to_output(class_col_f)
-
+def single_perceptron(data, iterations):
+    len_row = data.__len__()
+    output_error_const = []
+    [col_data, data_class] = transpose(data)
+    class_col = classify(data_class)
     o_zeros = []
-    for o2 in range(0, number_of_rows4):
+    for o2 in range(0, len_row):
         o_zeros.append(0)
-    # print(o_zeros)
-
-    [sum_error_f, err_array_f] = error_func(o_zeros, class_col_binary_f)
-    updated_ws0 = update_weights_const(data_col_f, [0, 0, 0], err_array_f)
-    out_error_array.append(sum_error_f)
+    [sum_error, err_array] = error_func(o_zeros, class_col)
+    updated_ws0 = update_weights_const(col_data, [0, 0, 0], err_array)
+    output_error_const.append(sum_error)
     updated_ws = updated_ws0
-    for itf1 in range(iterations):
-        new_out = activation_perceptron(data_col_f, updated_ws)
-        [sum_error_f, err_array_f] = error_func(new_out, class_col_binary_f)
-        updated_ws = update_weights_const(data_col_f, updated_ws, err_array_f)
-        out_error_array.append(sum_error_f)
-    # [sum_error, err_array] = error_func(out_arr1, class_col_binary)
-
-    out_error_array2 = []
-    iter1 = 0
-    [data_col_f, class_col_f] = row_to_column(data)
-    class_col_binary_f = alphabet_to_output(class_col_f)
-
+    for i in range(iterations):
+        new_out = activation_function(col_data, updated_ws)
+        [sum_error, err_array] = error_func(new_out, class_col)
+        updated_ws = update_weights_const(col_data, updated_ws, err_array)
+        output_error_const.append(sum_error)
+    output_error_anneal = []
+    [col_data, data_class] = transpose(data)
+    class_col = classify(data_class)
     o_zeros = []
-    for o2 in range(0, number_of_rows4):
+    for o2 in range(0, len_row):
         o_zeros.append(0)
-    # print(o_zeros)
-
-    [sum_error_f, err_array_f] = error_func(o_zeros, class_col_binary_f)
-    updated_ws0 = update_weights_annealing(data_col_f, [0, 0, 0], err_array_f, 1)
-    out_error_array2.append(sum_error_f)
+    [sum_error, err_array] = error_func(o_zeros, class_col)
+    updated_ws0 = update_weights_annealing(col_data, [0, 0, 0], err_array, 1)
+    output_error_anneal.append(sum_error)
     updated_ws = updated_ws0
-    for itf1 in range(iterations):
-        new_out = activation_perceptron(data_col_f, updated_ws)
-        [sum_error_f, err_array_f] = error_func(new_out, class_col_binary_f)
-        updated_ws = update_weights_annealing(data_col_f, updated_ws, err_array_f, itf1 + 2)
-        out_error_array2.append(sum_error_f)
+    for i in range(iterations):
+        new_out = activation_function(col_data, updated_ws)
+        [sum_error, err_array] = error_func(new_out, class_col)
+        updated_ws = update_weights_annealing(col_data, updated_ws, err_array, i + 2)
+        output_error_anneal.append(sum_error)
+    return output_error_const, output_error_anneal
 
-    return out_error_array, out_error_array2
+
+def write_data(row1, row2, filename):
+    with open(filename, 'w', newline='') as outfile:
+        output_file = csv.writer(outfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        line = []
+        for value in row1:
+            line.append(value)
+        output_file.writerow(line)
+        line = []
+        for value in row2:
+            line.append(value)
+        output_file.writerow(line)
+        print("File written in " + filename)
 
 
-[ot1, ot2] = iteration_final(rdata, 100)
-print(ot1)
-print(ot2)
-
-with open('sol_ML_assignment03.tsv', 'w', newline='') as outfile:
-    sol_file = csv.writer(outfile, delimiter='\t', quotechar='|', quoting=csv.QUOTE_MINIMAL)
-    A1 = []
-    A2 = []
-    for fi in range(len(ot1)):
-        A1.append((ot1[fi]))
-    sol_file.writerow(A1)
-    A2.append(A1)
-    A1 = []
-    for fi in range(len(ot1)):
-        A1.append((ot2[fi]))
-    A2.append(A1)
-    sol_file.writerow(A1)
+if __name__ == '__main__':
+    argv = sys.argv[1:]
+    iter_req = 0
+    outputfile = ""
+    inputfile = ""
+    if argv.__len__() != 0:
+        try:
+            opts, args = getopt.getopt(argv, "hit:o:", ["data=", "output=", "iter="])
+        except getopt.GetoptError:
+            print('usage: perceptron.py -i||--data <inputfile> -o||--output <outputfile>')
+            sys.exit(2)
+        for opt, arg in opts:
+            if opt == '-h':
+                print('test.py -i <inputfile> -o <outputfile>')
+                sys.exit()
+            elif opt in ("-i", "--data"):
+                inputfile = arg
+                if '.tsv' not in inputfile:
+                    inputfile = inputfile + '.tsv'
+            elif opt in ("-o", "--output"):
+                outputfile = arg
+                if '.tsv' not in outputfile:
+                    outputfile = outputfile + '.tsv'
+            elif opt in ('-t', "--iter"):
+                iter_req = int(arg)
+    else:
+        inputfile = input("Enter data file name: ")
+        if '.tsv' not in inputfile:
+            inputfile = inputfile + '.tsv'
+        outputfile = input("Enter Output file name: ")
+        if '.tsv' not in outputfile:
+            outputfile = outputfile + '.tsv'
+    if inputfile == "":
+        inputfile = input("Enter data file name: ")
+        if '.tsv' not in inputfile:
+            inputfile = inputfile + '.tsv'
+    if outputfile == "":
+        outputfile = input("Enter Output file name: ")
+        if '.tsv' not in outputfile:
+            outputfile = outputfile + '.tsv'
+    data, col_len, row_len = get_data(inputfile)
+    [data_col, data_class] = transpose(data)
+    if iter_req == 0:
+        iter_req = 100
+    [out_const_learning, out_anneal_learning] = single_perceptron(data, iter_req)
+    print(out_const_learning)
+    print(out_anneal_learning)
+    write_data(out_const_learning, out_anneal_learning, outputfile)
